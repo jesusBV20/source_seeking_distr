@@ -4,6 +4,7 @@
 
 import numpy as np
 from numpy import linalg as la
+import random
 
 # Graphic tools
 import matplotlib.pylab as plt
@@ -58,14 +59,19 @@ def XY_distrib(N, rc0, lims, n=2):
         X0[:,i] = X0[:,i] * lims[i]
     return rc0 + X0
 
-def gen_edges_by_dist(p,delta):
-    N = p.shape[0]
+def gen_random_graph(N):
+    non_visited_nd = set(range(10))
+    non_visited_nd.remove(0)
+    visited_nd = {0}
 
     Z = []
-    for i in range(N):
-        for j in range(N):
-            if i != j and la.norm(p[i,:]-p[j,:]) <= delta and (j,i) not in Z:
-                Z.append((i,j))
+    while len(non_visited_nd) != 0:
+        i = random.choice(list(visited_nd))
+        j = random.choice(list(non_visited_nd))
+        visited_nd.add(j)
+        non_visited_nd.remove(j)
+        Z.append((i,j))
+        
     return Z
 
 # ----------------------------------------------------------------------

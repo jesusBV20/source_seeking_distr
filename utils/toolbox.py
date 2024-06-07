@@ -10,6 +10,7 @@ import random
 import matplotlib.pylab as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
+from matplotlib.colors import ListedColormap
 
 # ----------------------------------------------------------------------
 # Mathematical tools
@@ -59,21 +60,56 @@ def XY_distrib(N, rc0, lims, n=2):
         X0[:,i] = X0[:,i] * lims[i]
     return rc0 + X0
 
-def gen_random_graph(N):
-    non_visited_nd = set(range(10))
-    non_visited_nd.remove(0)
-    visited_nd = {0}
-
+def gen_random_graph(N, rounds=1):
+    """
+    Function that generates a random graph using a simple heuristic
+    """
     Z = []
-    while len(non_visited_nd) != 0:
-        i = random.choice(list(visited_nd))
-        j = random.choice(list(non_visited_nd))
-        visited_nd.add(j)
-        non_visited_nd.remove(j)
-        Z.append((i,j))
+    for round in range(rounds):
+        non_visited_nd = set(range(N))
+        non_visited_nd.remove(0)
+        visited_nd = {0}
+
+        while len(non_visited_nd) != 0:
+            i = random.choice(list(visited_nd))
+            j = random.choice(list(non_visited_nd))
+            visited_nd.add(j)
+            non_visited_nd.remove(j)
+
+            if (i,j) not in Z:
+                Z.append((i,j))
         
     return Z
 
+def L_sigma(X, sigma, denom=None):
+    """
+    Funtion to compute L_sigma.
+
+    Attributes
+    ----------
+        X: numpy array
+            (N x 2) matrix of agents position from the centroid
+        sigma: numpy array
+            (N) vector of simgma_values on each row of X
+    """
+    N = X.shape[0]
+    l_sigma_hat = sigma[:,None].T @ X
+    if denom == None:
+        x_norms = np.zeros((N))
+        for i in range(N):
+            x_norms[i] = X[i,:] @ X[i,:].T
+            D_sqr = np.max(x_norms)
+        l_sigma_hat = l_sigma_hat / (N * D_sqr)
+    else:
+        l_sigma_hat = l_sigma_hat/denom
+    return l_sigma_hat.flatten()
+
+def unit_vec(v):
+    if la.norm(v) > 0:
+        return v/la.norm(v)
+    else:
+        return v
+    
 # ----------------------------------------------------------------------
 # Plotting functions
 # ----------------------------------------------------------------------
@@ -123,3 +159,31 @@ def unicycle_patch(XY, yaw, color, size=1, lw=0.5):
     path = Path(verts, codes)
 
     return patches.PathPatch(path, fc=color, lw=lw)
+
+def alpha_cmap(cmap, alpha):
+  # Get the colormap colors
+  my_cmap = cmap(np.arange(cmap.N))
+
+  # Define the alphas in the range from 0 to 1
+  alphas = np.linspace(alpha, alpha, cmap.N)
+
+  # Define the background as white
+  BG = np.asarray([1., 1., 1.,])
+
+  # Mix the colors with the background
+  for i in range(cmap.N):
+      my_cmap[i,:-1] = my_cmap[i,:-1] * alphas[i] + BG * (1.-alphas[i])
+
+  # Create new colormap which mimics the alpha values
+  my_cmap = ListedColormap(my_cmap)
+  return my_cmap
+
+
+def vector2d(axis, P0, Pf, c="k", ls="-", lw = 0.7, hw=0.1, hl=0.2, alpha=1, zorder=1):
+    """
+    Function to easy plot a 2D vector
+    """
+    axis.arrow(P0[0], P0[1], Pf[0], Pf[1],
+                lw=lw, color=c, ls=ls,
+                head_width=hw, head_length=hl, 
+                length_includes_head=True, alpha=alpha, zorder=zorder)

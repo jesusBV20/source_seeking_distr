@@ -7,61 +7,59 @@ import numpy as np
 from numpy import linalg as la
 from scipy.optimize import minimize
 
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scalar_field.utils import Q_prod_xi
+from toolbox.math_utils import unit_vec
 
 # Graphic tools
 import matplotlib.pylab as plt
-from utils.toolbox import alpha_cmap
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from toolbox.plot_utils import vector2d, alpha_cmap
 
-# ----------------------------------------------------------------------
-# Utility functions
-# ----------------------------------------------------------------------
-
-# Matrix Q dot each row of X
-Q_prod_xi = lambda Q,X: (Q @ X.T).T
-
-
-# Scalar field color map
 MY_CMAP = alpha_cmap(plt.cm.jet, 0.3)
 
 # ----------------------------------------------------------------------
-# General class for scalar field
-#  * mu: central point of the scalar field.
+# Common class for scalar fields
 # ----------------------------------------------------------------------
 
 class sigma:
-    def __init__(self, sigma_func, mu=None):
+    """
+    This class...
+    """
+    def __init__(self, sigma_func, R=None, x0=None):
         self.sigma_func = sigma_func
-        self.rot = None # Variable to rotate the field from outside
-        if mu is None:
-            x0 = self.sigma_func.x0 # Ask for help to find minimum
-            self.mu = minimize(lambda x: -self.value(np.array([x])), x0).x
-        else:
-            self.mu = minimize(lambda x: np.linalg.norm(self.grad(np.array([x]))), mu).x
 
-    """
-    - Evaluation of the scalar field for a vector of values -
-    """
+        # Scalar field rotation
+        self.R = R
+
+        # Scalar field source
+        if x0 is None:
+            x0 = self.sigma_func.x0 # Ask for help to find minimum
+
+        self.mu = minimize(lambda x: -self.sigma_func.eval(np.array([x])), x0).x
+
     def value(self, X):
-        if self.rot is not None:
-            X = Q_prod_xi(self.rot, X-self.mu) + self.mu
+        """
+        Evaluation of the scalar field for a vector of values
+        """
+        if self.R is not None:
+            X = Q_prod_xi(self.R, X-self.mu) + self.mu
         return self.sigma_func.eval(X)
 
-    """
-    - Gradient vector of the scalar field for a vector of values -
-    """
     def grad(self, X):
-        if self.rot is not None:
-            X = Q_prod_xi(self.rot, X-self.mu) + self.mu
+        """
+        Gradient vector of the scalar field for a vector of values.
+        """
+        if self.R is not None:
+            X = Q_prod_xi(self.R, X-self.mu) + self.mu
             grad = self.sigma_func.grad(X)
-            return Q_prod_xi(self.rot.T, grad)
+            return Q_prod_xi(self.R.T, grad)
         else:
             return self.sigma_func.grad(X)
     
-    """
-    - Function to draw the scalar field -
-    """
     def draw(self, fig=None, ax=None, xlim=30, ylim=30, cmap=MY_CMAP, n=256, contour_levels=0, contour_lw=0.3, cbar_sw=True):
+        """
+        Function for drawing the scalar field
+        """
         if fig == None:
             fig = plt.figure(figsize=(16, 9), dpi=100)
             ax = fig.subplots()
@@ -93,42 +91,45 @@ class sigma:
         else:
             return color_map,
 
-    """
-    Function to draw the gradient at a point.
-      * x: point where the gradient is to be drawn. [x,y]
-      * ax: axis to plot on.
-      * width: arrow size.
-      * scale: scales the length of the arrow (smaller for larger scale values).
-      * zorder: overlay order in the plot.
-    """
-    def draw_grad(self, x, axis, c="k", ls="-", lw = 0.7, hw=0.1, hl=0.2, alpha=1, ret_arr=True):
-        if type(x) == list:
-            grad_x = self.grad(np.array(x))[0]
-        else:
-            grad_x = self.grad(x)[0]
+    def draw_grad(self, x, axis, kw_arr=None, ret_arr=True):
+        """
+        Function for drawing the gradient at a given point in space
+            * kw_arr: c="k", ls="-", lw = 0.7, hw=0.1, hl=0.2, s=1, alpha=1
+        """
+        if isinstance(x, list):
+            x = np.array(x)
+        
+        grad_x = self.grad(x)[0]
+        grad_x_unit = unit_vec(grad_x)
 
-        grad_x_unit = grad_x/la.norm(grad_x)
-        quiver = axis.arrow(x[0], x[1], grad_x_unit[0], grad_x_unit[1],
-                            lw=lw, color=c, ls=ls,
-                            head_width=hw, head_length=hl, 
-                            length_includes_head=True, alpha=alpha)
+        if kw_arr is not None:
+            quiv = vector2d(axis, x, grad_x_unit, **kw_arr)
+        else:
+            quiv = vector2d(axis, x, grad_x_unit)
         
         if ret_arr:
-           return quiver
+           return quiv
         else:
            return grad_x_unit
     
-    """
-    Funtion to compute and draw L^1.
-        * pc: [x,y] position of the centroid
-        * P: (N x 2) matrix of agents position from the centroid
-    """
     def draw_L1(self, pc, P):
+        """
+        Funtion for calculating and drawing L^1
+
+        Attributes
+        ----------
+        pc: numpy array
+            [x,y] position of the centroid
+        P: numpy array
+            (N x 2) matrix of agents position from the centroid
+        """
+        if isinstance(pc, list):
+            pc = np.array(pc)
+
         N = P.shape[0]
         X = P - pc
 
-        sigma_val = self.value(P)
-        grad_pc = self.grad(np.array(pc))[0]
+        grad_pc = self.grad(pc)[0]
         l1_sigma_hat = (grad_pc[:,None].T @ X.T) @ X
 
         x_norms = np.zeros((N))

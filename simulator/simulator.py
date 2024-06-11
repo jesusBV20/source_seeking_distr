@@ -95,11 +95,12 @@ class simulator:
         Distributed estimation of the centroid
         """
         pb = self.p.flatten()
-        xhat_0 = np.zeros_like(pb)
-        xhat = odeint(dyn_centroid_estimation, xhat_0, self.tc, args=(self.Lb,pb,self.kc))
+        x_hat_0 = np.zeros_like(pb)
+        x_hat = odeint(dyn_centroid_estimation, x_hat_0, self.tc, args=(self.Lb,pb,self.kc))
 
-        pc_hat = (pb - xhat[-1]).reshape(self.p.shape)
-        return pc_hat
+        pc_hat = (pb - x_hat[-1]).reshape(self.p.shape)
+        x_hat = x_hat[-1].reshape(self.p.shape)
+        return pc_hat, x_hat
     
     def get_mu_estimation(self):
         """
@@ -134,11 +135,10 @@ class simulator:
         """
         
         # Centroid estimation
-        self.pc_hat = self.get_pc_estimation()
+        self.pc_hat, self.x = self.get_pc_estimation()
         self.pc_comp = np.mean(self.p, axis=0)
 
         self.sigma = self.sigma_field.value(self.p)[:,None]
-        self.x = self.p - self.pc_hat
 
         # Ascending direction estimation
         self.mu = self.get_mu_estimation()

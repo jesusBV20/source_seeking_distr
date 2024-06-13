@@ -22,9 +22,6 @@ MY_CMAP = alpha_cmap(plt.cm.jet, 0.3)
 # ----------------------------------------------------------------------
 
 class sigma:
-    """
-    This class...
-    """
     def __init__(self, sigma_func, R=None, x0=None):
         self.sigma_func = sigma_func
 

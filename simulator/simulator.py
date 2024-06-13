@@ -16,9 +16,6 @@ from toolbox.math_utils import unit_vec, L_sigma
 # ----------------------------------------------------------------------
 
 class simulator:
-    """
-    This class...
-    """
     def __init__(self, q0, Z, sigma_field, dt=1/60, kc=1, kl=1, kd=1,
                  its_c=100, its_l=100):
         # Initial state
@@ -79,7 +76,7 @@ class simulator:
         self.data["mu"].append(self.mu)
         self.data["pc_comp"].append(self.pc_comp)
         self.data["mu_comp"].append(self.mu_comp)
-        self.data["status"].append(self.status)
+        self.data["status"].append(np.copy(self.status))
         
     def get_pc_estimation(self):
         """

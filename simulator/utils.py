@@ -9,11 +9,11 @@ import numpy as np
 # Mathematical utility functions
 # ----------------------------------------------------------------------
 
-def build_B(list_edges, n):
+def build_B(list_edges, N):
     """
-    Generate the incidence matrix.
+    Generate the incidence matrix
     """
-    B = np.zeros((n,len(list_edges)))
+    B = np.zeros((N,len(list_edges)))
     for i in range(len(list_edges)):
         B[list_edges[i][0]-1, i] = 1
         B[list_edges[i][1]-1, i] = -1
@@ -21,14 +21,14 @@ def build_B(list_edges, n):
 
 def build_L_from_B(B):
     """
-    Generate the Laplacian matrix by using the incidence matrix (unit weights).
+    Generate the Laplacian matrix by using the incidence matrix (unit weights)
     """
     L = B@B.T
     return L
 
 def angle_of_vectors(A,B):
     """
-    Calculate the angle between two vectors (matrix computing).
+    Calculate the angle between two vectors (matrix computing)
     """
     cosTh = np.sum(A*B, axis=1)
     sinTh = np.cross(A,B, axis=1)

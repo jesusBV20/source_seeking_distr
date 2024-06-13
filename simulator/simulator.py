@@ -27,11 +27,12 @@ class simulator:
         self.v = q0[1]
         self.phi = q0[2]
 
-        # Build the Laplacian matrix
+        self.Z = Z
         self.N = self.p.shape[0]
 
-        B = build_B(Z,self.N)
-        L = build_L_from_B(B)
+        # Build the Laplacian matrix
+        self.B = build_B(Z, self.N)
+        L = build_L_from_B(self.B)
         self.Lb = np.kron(L, np.eye(2))
 
         # Compute algebraic connectivity
@@ -55,6 +56,7 @@ class simulator:
         self.mu_comp = np.zeros_like(self.p)
 
         self.omega = np.zeros(self.N)
+        self.status = np.ones(self.N, dtype=bool) # (0:non-active, 1:active)
 
         # Integrator and ED solver parameters
         self.t = 0
@@ -64,7 +66,7 @@ class simulator:
 
         # Simulation data providerdata_pc_hat
         self.data = {"t": [], "p": [], "phi": [], "pc_hat": [], "mu": [],
-                     "pc_comp": [], "mu_comp": []}
+                     "pc_comp": [], "mu_comp": [], "status": []}
 
     def update_data(self):
         """
@@ -77,18 +79,7 @@ class simulator:
         self.data["mu"].append(self.mu)
         self.data["pc_comp"].append(self.pc_comp)
         self.data["mu_comp"].append(self.mu_comp)
-
-    def restart(self):
-        """
-        Clean up the data dictionary and restore the initial state
-        """
-        self.p = self.q0[0]
-        self.v = self.q0[1]
-        self.phi = self.q0[2]
-
-        self.t = 0
-        for key in self.data:
-            self.data[key] = []
+        self.data["status"].append(self.status)
         
     def get_pc_estimation(self):
         """
@@ -122,6 +113,29 @@ class simulator:
         omega = - self.kd * angle_of_vectors(self.mu, p_dot_unit)
         return omega
 
+    def kill_agents(self, agents_index):
+        """
+        Update the Lalplacian matrix to kill the connections of the
+        specified agents, and update their status to (0)-"non-active"
+        """
+        if not isinstance(agents_index, list):
+            agents_index = [agents_index]
+
+        # Generate the new indicende matrix
+        newB = np.copy(self.B)
+        for i in agents_index:
+            for j in range(newB.shape[1]):
+                if self.B[i,j] != 0:
+                    newB[:,j] = 0
+
+        # Rebuild the Laplacian matrix
+        self.B = np.copy(newB)
+        L = build_L_from_B(self.B)
+        self.Lb = np.kron(L, np.eye(2))
+
+        # Update the agents status
+        self.status[agents_index] = 0
+
     # ----- UNICYCLE  KINEMATICS
     def unicycle_kinematics(self):
         p_dot = self.v * np.array([np.cos(self.phi), np.sin(self.phi)]).T
@@ -136,19 +150,23 @@ class simulator:
         
         # Centroid estimation
         self.pc_hat, self.x = self.get_pc_estimation()
-        self.pc_comp = np.mean(self.p, axis=0)
+        self.pc_comp = np.mean(self.p[self.status, :], axis=0)
 
         self.sigma = self.sigma_field.value(self.p)[:,None]
 
         # Ascending direction estimation
         self.mu = self.get_mu_estimation()
-        self.mu_comp = L_sigma(self.p-self.pc_hat, self.sigma_field.value(self.p))
+        self.mu_comp = L_sigma(self.p[self.status, :]-self.pc_hat[self.status, :], 
+                               self.sigma_field.value(self.p[self.status, :]))
 
         # Compute the mu tracking control input
         self.omega = self.mu_tracking_control()
 
         # Robot dynamics integration
         p_dot, phi_dot = self.unicycle_kinematics()
+
+        p_dot[~self.status, :] = 0 
+        phi_dot[~self.status] = 0
 
         self.t = self.t + self.dt
         self.p = self.p + self.dt*p_dot

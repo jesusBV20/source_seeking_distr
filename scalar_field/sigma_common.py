@@ -44,7 +44,7 @@ class sigma:
 
     def grad(self, X):
         """
-        Gradient vector of the scalar field for a vector of values.
+        Gradient vector of the scalar field for a vector of values
         """
         if self.R is not None:
             X = Q_prod_xi(self.R, X-self.mu) + self.mu

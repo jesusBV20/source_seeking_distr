@@ -12,20 +12,8 @@ import matplotlib
 
 from toolbox.plot_utils import vector2d, unicycle_patch
 
-# Figsize adjusted to 16:9
-FIGSIZE = (16,9)
-
-# DPI resolution dictionary
-RES_DIC = {
-    "480p"   : 640,
-    "HD"     : 1280,
-    "FullHD" : 1920,
-    "2K"     : 2560,
-    "4K"     : 3880
-    }
-
-KW_DRAW_FIELD = {"xlim":3*50, "ylim":2*50, "n":400, "contour_levels":20}
-TEAM_COLORS = ["royalblue", "green", "red"]
+TEAM_COLORS = ["royalblue", "green"]
+FIGSIZE = (12,8)
 
 # ----------------------------------------------------------------------
 # Simulator class
@@ -44,7 +32,12 @@ class plotter:
         self.team_tags = team_tags
         self.xlim, self.ylim = xlim, ylim
         self.size = agents_size
-    
+
+        dx = abs(self.xlim[0] - self.xlim[1])
+        dy = abs(self.ylim[0] - self.ylim[1])
+        self.kw_field = {"xlim":dx, "ylim":dy, "n":200}
+        self.kw_patch = {"size":dx/130*3, "lw":0.5}
+
     # PLOTS ------------------------------------------------------------
 
     def plot_simulation(self, dpi=100):
@@ -58,6 +51,8 @@ class plotter:
         else:
             agents_colors = [TEAM_COLORS[self.team_tags[n]] if data_status[-1,n] else "red" for n in range(self.N)]
 
+
+
         # Initialise the figure
         fig = plt.figure(figsize=FIGSIZE, dpi=dpi)
         ax = fig.subplots()
@@ -70,16 +65,19 @@ class plotter:
         ax.set_ylabel("Y [L]")
 
         # Draw the scalar field
-        self.sigma_field.draw(fig, ax, **KW_DRAW_FIELD)
+        self.sigma_field.draw(fig, ax, **self.kw_field)
 
         # Plot the trace of each agent
         for n in range(self.N):
-            ax.plot(data_p[:,n,0], data_p[:,n,1], c=agents_colors[n], zorder=1, lw=0.8)
+            if self.team_tags is None:
+                ax.plot(data_p[:,n,0], data_p[:,n,1], c="k", zorder=1, lw=0.8)
+            else:
+                ax.plot(data_p[:,n,0], data_p[:,n,1], c=agents_colors[n], zorder=1, lw=0.8)
 
         # Agents icon
         for n in range(self.N):
-            icon_i = unicycle_patch(data_p[0,n,:], data_phi[0,n], "royalblue", size=self.size, lw=0.4)
-            icon_f = unicycle_patch(data_p[-1,n,:], data_phi[-1,n], agents_colors[n], size=self.size, lw=0.4)
+            icon_i = unicycle_patch(data_p[0,n,:], data_phi[0,n], "royalblue", **self.kw_patch)
+            icon_f = unicycle_patch(data_p[-1,n,:], data_phi[-1,n], agents_colors[n], **self.kw_patch)
             icon_i.set_alpha(0.5)
             ax.add_patch(icon_i)
             ax.add_patch(icon_f)
@@ -101,9 +99,9 @@ class plotter:
 
         # Agents color
         if self.team_tags is None:
-            agents_colors = [TEAM_COLORS[0] for n in range(self.N)]
+            agents_colors = ["royalblue" if data_status[-1,n] else "red" for n in range(self.N)]
         else:
-            agents_colors = [TEAM_COLORS[self.team_tags[n]] for n in range(self.N)]
+            agents_colors = [TEAM_COLORS[self.team_tags[n]] if data_status[-1,n] else "red" for n in range(self.N)]
 
         # Extract the requiered data from the scalar field
         data_p_sigma = self.sigma_field.mu
@@ -188,7 +186,7 @@ class plotter:
         ax.set_ylabel("Y [L]")
 
         # Draw the scalar field
-        self.sigma_field.draw(fig, ax, **KW_DRAW_FIELD)
+        self.sigma_field.draw(fig, ax, **self.kw_field)
 
         # Trace of each agent
         traces_list = []
@@ -199,7 +197,7 @@ class plotter:
         # Agents icon
         icons_list = []
         for n in range(self.N):
-            icon = unicycle_patch(data_p[0,n,:], data_phi[0,n], agents_colors[n], size=self.size, lw=0.4)
+            icon = unicycle_patch(data_p[0,n,:], data_phi[0,n], agents_colors[n], **self.kw_patch)
             ax.add_patch(icon)
             icons_list.append(icon)
 
@@ -214,7 +212,7 @@ class plotter:
             # Agents
             for n in range(self.N):
                 icons_list[n].remove()
-                icons_list[n] = unicycle_patch(data_p[i,n,:], data_phi[i,n], colors[n], size=self.size, lw=0.4)
+                icons_list[n] = unicycle_patch(data_p[i,n,:], data_phi[i,n], colors[n], **self.kw_patch)
    
                 ax.add_patch(icons_list[n])
 

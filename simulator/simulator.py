@@ -16,9 +16,6 @@ from toolbox.math_utils import unit_vec, L_sigma
 # ----------------------------------------------------------------------
 
 class simulator:
-    """
-    This class...
-    """
     def __init__(self, q0, Z, sigma_field, dt=1/60, kc=1, kl=1, kd=1,
                  its_c=100, its_l=100):
         # Initial state

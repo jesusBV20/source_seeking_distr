@@ -10,8 +10,6 @@ import matplotlib
 
 from toolbox.plot_utils import vector2d, unicycle_patch
 
-KW_DRAW_FIELD = {"xlim":2*50, "ylim":2*50, "n":400, "contour_levels":20}
-KW_PATCH = {"size":4, "lw":0.1}
 TEAM_COLORS = ["royalblue", "green"]
 
 # ----------------------------------------------------------------------
@@ -19,9 +17,6 @@ TEAM_COLORS = ["royalblue", "green"]
 # ----------------------------------------------------------------------
 
 class plotter:
-    """
-    This class...
-    """
     def __init__(self, simulator):
         matplotlib.rc('font', **{'size' : 14})
 
@@ -30,6 +25,11 @@ class plotter:
         self.N = simulator.N
     
     def plot_simulation(self, team_tags=None, dpi=100, xlim=[-50,80], ylim=[-50,70]):
+        dx = abs(xlim[0] - xlim[1])
+        dy = abs(xlim[0] - xlim[1]) 
+        kw_field = {"xlim":dx, "ylim":dy, "n":400, "contour_levels":20}
+        kw_patch = {"size":4*dx/130, "lw":0.1}
+
         # Extract the requiered data from the simulation
         data_p = np.array(self.data["p"])
         data_phi = np.array(self.data["phi"])
@@ -48,8 +48,7 @@ class plotter:
         ax.set_ylim(ylim)
 
         # Draw the scalar field
-        
-        self.sigma_field.draw(fig, ax, **KW_DRAW_FIELD)
+        self.sigma_field.draw(fig, ax, **kw_field)
 
         # Plot the trace of each agent
         for n in range(self.N):
@@ -57,8 +56,8 @@ class plotter:
 
         # Agents icon
         for n in range(self.N):
-            icon_i = unicycle_patch(data_p[0,n,:], data_phi[0,n], "royalblue", **KW_PATCH)
-            icon_f = unicycle_patch(data_p[-1,n,:], data_phi[-1,n], agents_colors[n], **KW_PATCH)
+            icon_i = unicycle_patch(data_p[0,n,:], data_phi[0,n], "royalblue", **kw_patch)
+            icon_f = unicycle_patch(data_p[-1,n,:], data_phi[-1,n], agents_colors[n], **kw_patch)
             icon_i.set_alpha(0.5)
             ax.add_patch(icon_i)
             ax.add_patch(icon_f)
@@ -66,7 +65,7 @@ class plotter:
         # Show the plot!!
         plt.show()
 
-    def plot_estimations(self, team_tags, figsize=(12,4), dpi=100):
+    def plot_estimations(self, team_tags=None, figsize=(12,4), dpi=100):
         """
         Plot the estimation of the centroid and the ascending direction during the whole simulation
         """

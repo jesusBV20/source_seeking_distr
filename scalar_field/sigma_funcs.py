@@ -29,8 +29,8 @@ class sigma_gauss:
         dev: float
             models the width of the Gaussian
     """
-    def __init__(self, mu=[0,0], n=2, max_intensity=100, dev=10, S=None, R=None):
-        self.n = n
+    def __init__(self, mu=[0,0], max_intensity=100, dev=10, S=None, R=None):
+        n = 2
         self.max_intensity = max_intensity
         self.dev = dev
 

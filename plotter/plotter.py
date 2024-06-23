@@ -35,7 +35,7 @@ class plotter:
 
         dx = abs(self.xlim[0] - self.xlim[1])
         dy = abs(self.ylim[0] - self.ylim[1])
-        self.kw_field = {"xlim":dx, "ylim":dy, "n":200}
+        self.kw_field = {"xlim":dx, "ylim":dy, "n":250}
         self.kw_patch = {"size":dx/130*3, "lw":0.5}
 
     # PLOTS ------------------------------------------------------------
@@ -151,7 +151,7 @@ class plotter:
 
     # ANIMATIONS --------------------------------------------------------
 
-    def anim_simulation(self, anim_tf=None, tail_frames=100, fps=60):
+    def anim_simulation(self, anim_tf=None, tail_frames=100, fps=60, dpi=100):
         """
         """
         # Extract the requiered data from the simulation
@@ -174,7 +174,7 @@ class plotter:
         anim_frames = int(anim_tf/self.dt + 1)
 
         # Initialise the figure
-        fig = plt.figure(figsize=FIGSIZE, dpi=100)
+        fig = plt.figure(figsize=FIGSIZE, dpi=dpi)
         ax = fig.subplots()
 
         ax.set_xlim(self.xlim)
@@ -225,7 +225,7 @@ class plotter:
                 title.set_text("Frame = {0:>4} | Tf = {1:>5.2f} [T] | N = {2:>3} robots".format(i, i*self.dt, self.N))
         
         # Generate the animation
-        print("Simulating {0:d} frames...".format(anim_frames))
+        print("Generating {0:d} frames...".format(anim_frames))
         anim = FuncAnimation(fig, animate, frames=tqdm(range(anim_frames), initial=1, position=0), 
                             interval=1/fps*1000)
         anim.embed_limit = 40

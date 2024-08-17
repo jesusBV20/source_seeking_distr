@@ -3,11 +3,13 @@
 - Scalar field common class -
 """
 
+from abc import ABC, abstractmethod
 import numpy as np
 from numpy import linalg as la
 from scipy.optimize import minimize
 
 # Graphic tools
+import matplotlib
 import matplotlib.pylab as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -17,54 +19,59 @@ from ..toolbox.plot_utils import vector2d, alpha_cmap
 
 MY_CMAP = alpha_cmap(plt.cm.jet, 0.3)
 
-# ----------------------------------------------------------------------
-# Common class for scalar fields
-# ----------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 
 
-class sigma:
-    def __init__(self, sigma_func, R=None, x0=None):
-        self.sigma_func = sigma_func
+class SigmaField(ABC):
+    A = np.eye(2)
 
-        # Scalar field rotation
-        self.R = R
+    # ------------------------------------------------------------------------
+    # These operations have to be implemented in the subclass ################
 
-        # Scalar field source
-        if x0 is None:
-            x0 = self.sigma_func.x0  # Ask for help to find minimum
+    @property
+    @abstractmethod
+    def mu(self) -> np.ndarray:
+        pass
 
-        self.mu = minimize(lambda x: -self.sigma_func.eval(np.array([x])), x0).x
-
-    def value(self, X):
+    @abstractmethod
+    def eval_value(self, X: np.ndarray) -> np.ndarray:
         """
         Evaluation of the scalar field for a vector of values
         """
-        if self.R is not None:
-            X = Q_prod_xi(self.R, X - self.mu) + self.mu
-        return self.sigma_func.eval(X)
+        pass
 
-    def grad(self, X):
+    @abstractmethod
+    def eval_grad(self, X: np.ndarray) -> np.ndarray:
         """
         Gradient vector of the scalar field for a vector of values
         """
-        if self.R is not None:
-            X = Q_prod_xi(self.R, X - self.mu) + self.mu
-            grad = self.sigma_func.grad(X)
-            return Q_prod_xi(self.R.T, grad)
-        else:
-            return self.sigma_func.grad(X)
+        pass
+
+    # ------------------------------------------------------------------------
+
+    def value(self, X: np.ndarray) -> np.ndarray:
+        X = Q_prod_xi(self.A, X - self.mu) + self.mu
+        return self.eval_value(X)
+
+    def grad(self, X: np.ndarray) -> np.ndarray:
+        X = Q_prod_xi(self.A, X - self.mu) + self.mu
+        grad = self.eval_grad(X)
+        return Q_prod_xi(self.A.T, grad)
+
+    def find_max(self, x0: np.ndarray) -> np.ndarray:
+        return minimize(lambda x: -self.value(np.array([x])), x0).x
 
     def draw(
         self,
-        fig=None,
-        ax=None,
-        xlim=30,
-        ylim=30,
-        cmap=MY_CMAP,
-        n=256,
-        contour_levels=0,
-        contour_lw=0.3,
-        cbar_sw=True,
+        fig: matplotlib.figure.Figure = None,
+        ax: plt.Axes = None,
+        xlim: float = 30,
+        ylim: float = 30,
+        cmap: matplotlib.colors.ListedColormap = MY_CMAP,
+        n: int = 256,
+        contour_levels: int = 0,
+        contour_lw: float = 0.3,
+        cbar_sw: bool = True,
     ):
         """
         Scalar field drawing function
@@ -106,11 +113,13 @@ class sigma:
         else:
             return (color_map,)
 
-    def draw_grad(self, x, axis, kw_arr=None, ret_arr=True):
+    def draw_grad(
+        self, x: np.ndarray, axis: plt.Axes, kw_arr: dict = None, ret_arr: bool = True
+    ):
         """
         Function for drawing the gradient at a given point in space
-            * kw_arr: c="k", ls="-", lw = 0.7, hw=0.1, hl=0.2, s=1, alpha=1
         """
+        # kw_arr: c="k", ls="-", lw = 0.7, hw=0.1, hl=0.2, s=1, alpha=1
         if isinstance(x, list):
             x = np.array(x)
 
@@ -127,7 +136,7 @@ class sigma:
         else:
             return grad_x_unit
 
-    def draw_L1(self, pc, P):
+    def draw_L1(self, pc: np.ndarray, P: np.ndarray):
         """
         Funtion for calculating and drawing L^1
 
@@ -154,3 +163,6 @@ class sigma:
 
         l1_sigma_hat = l1_sigma_hat / (N * D_sqr)
         return l1_sigma_hat.flatten()
+
+
+# --------------------------------------------------------------------------------------

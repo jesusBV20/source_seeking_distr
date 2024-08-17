@@ -6,17 +6,26 @@
 import numpy as np
 from numpy import linalg as la
 
+from .sigma_common import SigmaField
+
 # Our utils
 from ..toolbox.math_utils import Q_prod_xi, exp, two_dim
 
-# (all of the following classes need "eval" and "grad" functions, and the variable "x0")
+# --------------------------------------------------------------------------------------
+
+# Default parameters
+S1 = 0.9 * np.array([[1 / np.sqrt(30), 0], [0, 1]])
+S2 = 0.9 * np.array([[1, 0], [0, 1 / np.sqrt(15)]])
+A = (1 / np.sqrt(2)) * np.array([[1, -1], [1, 1]])
+a = [1, 0]
+b = [0, -1.5]
 
 # ----------------------------------------------------------------------
 # Gaussian function
 # ----------------------------------------------------------------------
 
 
-class sigma_gauss:
+class SigmaGauss(SigmaField):
     """
     Gaussian scalar field function
 
@@ -34,22 +43,19 @@ class sigma_gauss:
             2x2 matrix, scaling matrix applied to the scalar field
     """
 
-    def __init__(self, mu=[0, 0], max_intensity=100, dev=10, S=None, R=None):
-        n = 2
+    def __init__(self, mu=[0, 0], max_intensity=100, dev=10):
+        self.x0 = mu
         self.max_intensity = max_intensity
         self.dev = dev
+        self.Q = -np.eye(2) / (2 * self.dev**2)
 
-        # Variables needed for the sigma (common) class
-        self.x0 = mu
-        # ---
+        self._mu = mu
 
-        if S is None:
-            S = -np.eye(n)
-        if R is None:
-            R = np.eye(n)
-        self.Q = R.T @ S @ R / (2 * self.dev**2)
+    @property
+    def mu(self):
+        return self._mu
 
-    def eval(self, X):
+    def eval_value(self, X):
         X = two_dim(X)
         sigma = (
             self.max_intensity
@@ -58,24 +64,17 @@ class sigma_gauss:
         )
         return sigma
 
-    def grad(self, X):
+    def eval_grad(self, X):
         X = two_dim(X)
-        return Q_prod_xi(self.Q, X - self.x0) * self.eval(X)
+        return Q_prod_xi(self.Q, X - self.x0) * self.value(X)
 
 
 # ----------------------------------------------------------------------
 # Non-convex function (two Gaussians + contant * norm)
 # ----------------------------------------------------------------------
 
-# Default parameters
-S1 = 0.9 * np.array([[1 / np.sqrt(30), 0], [0, 1]])
-S2 = 0.9 * np.array([[1, 0], [0, 1 / np.sqrt(15)]])
-A = (1 / np.sqrt(2)) * np.array([[1, -1], [1, 1]])
-a = [1, 0]
-b = [0, -1.5]
 
-
-class sigma_nonconvex:
+class SigmaNonconvex(SigmaField):
     """
     Non-convex scalar field function (two Gaussians + "norm factor" * norm)
 
@@ -87,9 +86,9 @@ class sigma_nonconvex:
             center of the Gaussian.
         dev: float
             models the scale of the distribution while maintaining its properties
-        a: list
+        a: np.ndarray
             center of the first Gaussian
-        b: list
+        b: np.ndarray
             center of the second Gaussian
         Qa: numpy array
             2x2 matrix, quadratic transformation of the first Gaussian input
@@ -98,12 +97,9 @@ class sigma_nonconvex:
     """
 
     def __init__(self, k, mu=[0, 0], dev=1, a=a, b=b, Qa=-S1, Qb=-A.T @ S2 @ A):
+        self.x0 = mu
         self.k = k
         self.dev = dev
-
-        # Variables needed for the sigma (common) class
-        self.x0 = mu
-        # ---
 
         if isinstance(a, list):
             a = np.array(a)
@@ -114,7 +110,14 @@ class sigma_nonconvex:
         self.Qa = Qa
         self.Qb = Qb
 
-    def eval(self, X):
+        self._mu = mu
+        self._mu = self.find_max(mu)
+
+    @property
+    def mu(self):
+        return self._mu
+
+    def eval_value(self, X):
         X = two_dim(X)
         X = (X - self.x0) / self.dev
         sigma = (
@@ -125,7 +128,7 @@ class sigma_nonconvex:
         )
         return -sigma
 
-    def grad(self, X):
+    def eval_grad(self, X):
         X = two_dim(X)
         X = (X - self.x0) / self.dev
         alfa = 0.0001  # Trick to avoid x/0
@@ -137,9 +140,14 @@ class sigma_nonconvex:
         return -sigma_grad
 
 
+# ----------------------------------------------------------------------
+# Fractal function (two Gaussians + contant * norm)
+# ----------------------------------------------------------------------
+
+
 # Analyzing the previous cases, we propose a function that allows us to play much more
 # with the generation of scalar fields
-class sigma_fract:
+class SigmaFract(SigmaField):
     """
     Fractal scalar field
 
@@ -151,9 +159,9 @@ class sigma_fract:
             center of the Gaussian.
         dev: float
             models the scale of the distribution while maintaining its properties
-        a: list
+        a: np.ndarray
             center of the first Gaussian
-        b: list
+        b: np.ndarray
             center of the second Gaussian
         Qa: numpy array
             2x2 matrix, quadratic transformation of the first Gaussian input
@@ -162,12 +170,9 @@ class sigma_fract:
     """
 
     def __init__(self, k, mu=[0, 0], dev=[1, 1], a=a, b=b, Qa=-S1, Qb=-A.T @ S2 @ A):
+        self.x0 = mu
         self.k = k
         self.dev = dev
-
-        # Variables needed for the sigma (common) class
-        self.x0 = mu
-        # ---
 
         if type(a) == list:
             a = np.array(a)
@@ -178,7 +183,14 @@ class sigma_fract:
         self.Qa = Qa
         self.Qb = Qb
 
-    def eval(self, X):
+        self._mu = mu
+        self._mu = self.find_max(mu)
+
+    @property
+    def mu(self):
+        return self._mu
+
+    def eval_value(self, X):
         X = two_dim(X)
         X = X - self.x0
         c1 = -exp(X / self.dev[0], self.Qa, self.a) - exp(
@@ -191,7 +203,7 @@ class sigma_fract:
         sigma = -2 + 2 * c1 + c2 + self.k * x_dist
         return -sigma
 
-    def grad(self, X):
+    def eval_grad(self, X):
         X = two_dim(X)
         X = (X - self.x0) / self.dev
         alfa = 0.0001  # Trick to avoid x/0

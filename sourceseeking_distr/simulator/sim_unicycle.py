@@ -26,8 +26,10 @@ class UnicycleSimulator:
         self.v = q0[1]
         self.phi = q0[2]
 
-        self.Z = Z
         self.N = self.p.shape[0]
+        self.status = np.ones(self.N, dtype=bool)  # (0:non-active, 1:active)
+
+        self.set_Z(Z)
 
         # Build the Laplacian matrix
         self.B = build_B(Z, self.N)
@@ -55,7 +57,6 @@ class UnicycleSimulator:
         self.mu_comp = np.zeros_like(self.p)
 
         self.omega = np.zeros(self.N)
-        self.status = np.ones(self.N, dtype=bool)  # (0:non-active, 1:active)
 
         # Integrator and ED solver parameters
         self.t = 0
@@ -74,6 +75,31 @@ class UnicycleSimulator:
             "mu_comp": [],
             "status": [],
         }
+
+    def set_Z(self, Z):
+        """
+        Set the new Z and build the Laplacian matrix
+        """
+        self.Z = Z
+        self.B = build_B(Z, self.N)
+        self.gen_L()
+
+    def gen_L(self):
+        # Modify the actual B considering dead units
+        B_kill = np.copy(self.B)
+        for i in np.where(self.status == 0)[0]:
+            for j in range(self.B.shape[1]):
+                if self.B[i, j] != 0:
+                    B_kill[:, j] = 0
+        self.B = np.copy(B_kill)
+
+        # Generate the Laplacian matrix
+        self.L = build_L_from_B(self.B)
+        self.Lb = np.kron(self.L, np.eye(2))
+
+        # Compute algebraic connectivity
+        eig_vals = np.linalg.eigvals(self.L)
+        self.lambda2 = np.min(eig_vals[abs(eig_vals) > 1e-7])
 
     def update_data(self):
         """
@@ -130,20 +156,11 @@ class UnicycleSimulator:
         if not isinstance(agents_index, list):
             agents_index = [agents_index]
 
-        # Generate the new indicende matrix
-        newB = np.copy(self.B)
-        for i in agents_index:
-            for j in range(newB.shape[1]):
-                if self.B[i, j] != 0:
-                    newB[:, j] = 0
-
-        # Rebuild the Laplacian matrix
-        self.B = np.copy(newB)
-        L = build_L_from_B(self.B)
-        self.Lb = np.kron(L, np.eye(2))
-
         # Update the agents status
         self.status[agents_index] = 0
+
+        # Generate the new Laplacian matrix
+        self.gen_L()
 
     # ----- UNICYCLE  KINEMATICS
     def unicycle_kinematics(self):

@@ -1,6 +1,4 @@
-# Ignore every __pycache__ directory
-__pycache__/
-
 # Directories
-.vscode
+__pycache__/
+.vscode/
 output/

@@ -11,13 +11,14 @@ from matplotlib.animation import FuncAnimation
 import matplotlib
 
 # Our utils
+from .animation import Animation
 from ..toolbox.plot_utils import vector2d
 from ..toolbox.math_utils import step_repeat
 
-TEAM_COLOR = "royalblue"
+AGENTS_COLOR = "royalblue"
+DEAD_AGENTS_COLOR = "red"
 AGENTS_RAD = 0.2
 FIGSIZE = (12, 8)
-
 
 # --------------------------------------------------------------------------------------
 # Simulator class
@@ -35,6 +36,7 @@ class SingIntPlotter:
         self.N = simulator.N
         self.dt = simulator.dt
         self.tf = simulator.t
+        self.its = simulator.it
 
         self.xlim, self.ylim = xlim, ylim
         self.size = agents_size
@@ -45,9 +47,11 @@ class SingIntPlotter:
         self.kw_field = {"xlim": dx, "ylim": dy, "n": 1000}
         self.kw_patch = {"size": dx / 130 * 3, "lw": 0.5}
 
+        self.animation = Animation()
+
     # PLOTS ----------------------------------------------------------------------------
 
-    def plot_simulation(self, dpi=100):
+    def plot_simulation(self, dpi=100, figsize=FIGSIZE):
         # Extract the requiered data from the simulation
         data_p = np.array(self.data["p"])
         data_status = np.array(self.data["status"])
@@ -58,7 +62,7 @@ class SingIntPlotter:
         ]
 
         # Initialise the figure
-        fig = plt.figure(figsize=FIGSIZE, dpi=dpi)
+        fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.subplots()
 
         ax.set_xlim(self.xlim)
@@ -108,7 +112,14 @@ class SingIntPlotter:
         plt.show()
 
     def plot_paper_fig(
-        self, dpi=100, obstacles=None, figsize=(17, 8), est_window=[], lw_data=0.8
+        self,
+        dpi=100,
+        obstacles=None,
+        figsize=(17, 8),
+        est_window=[],
+        lw_data=0.8,
+        alpha=0.8,
+        text_shift=[-15, 7],
     ):
         # Extract the requiered data from the simulation
         data_p = np.array(self.data["p"])
@@ -191,8 +202,8 @@ class SingIntPlotter:
             )
 
         # Agents icon
-        x = data_pc[0, 0] - 15
-        y = data_pc[0, 1] + 7
+        x = data_pc[0, 0] + text_shift[0]
+        y = data_pc[0, 1] + text_shift[1]
         ax.text(x, y, "t = " + str(round(0, 2)))
         for n in range(self.N):
             icon_i = plt.Circle(
@@ -201,7 +212,7 @@ class SingIntPlotter:
             icon_i.set_alpha(0.5)
             ax.add_patch(icon_i)
 
-        t_list = [self.tf / 4, self.tf / 2, self.tf]
+        t_list = [self.tf / 4, self.tf / 2, self.tf - self.dt]
         for t in t_list:
             it = int(t / self.dt)
             x = data_pc[it, 0] - 15
@@ -276,19 +287,20 @@ class SingIntPlotter:
             data_mux = data_mux.reshape(len(time_its_m_vec))
             data_muy = data_muy.reshape(len(time_its_m_vec))
 
-            ax_data_pcx.plot(time_its_c_vec, data_pcx, c=agents_colors2[n], lw=lw_data)
-            ax_data_pcy.plot(time_its_c_vec, data_pcy, c=agents_colors2[n], lw=lw_data)
-            ax_data_mux.plot(time_its_m_vec, data_mux, c=agents_colors2[n], lw=lw_data)
-            ax_data_muy.plot(time_its_m_vec, data_muy, c=agents_colors2[n], lw=lw_data)
+            kw_args = {"c": agents_colors2[n], "lw": lw_data, "alpha": alpha}
+            ax_data_pcx.plot(time_its_c_vec, data_pcx, **kw_args)
+            ax_data_pcy.plot(time_its_c_vec, data_pcy, **kw_args)
+            ax_data_mux.plot(time_its_m_vec, data_mux, **kw_args)
+            ax_data_muy.plot(time_its_m_vec, data_muy, **kw_args)
 
-        time_vec = np.arange(0, self.tf, self.dt)
+        time_vec = np.linspace(0, self.tf, self.its)
 
         ax_data_sigma.axhline(self.sigma_field.value(mu), c="k", ls="--", lw=2)
         ax_data_dist.axhline(0, c="k", ls="--", lw=2)
 
         for n in range(self.N):
-            kw_args = {"c": agents_colors[n], "lw": lw_data, "alpha": 0.8}
-            ax_data_sigma.plot(time_vec, data_sigma[:, n], **kw_args)
+            kw_args = {"c": agents_colors[n], "lw": lw_data, "alpha": alpha}
+            ax_data_sigma.plot(time_vec, data_sigma[:, n, 0], **kw_args)
             ax_data_dist.plot(time_vec, data_dist[:, n], **kw_args)
         # Show the plot!!
         plt.show()
@@ -408,12 +420,18 @@ class SingIntPlotter:
 
     # ANIMATIONS -----------------------------------------------------------------------
 
-    def anim_simulation(self, anim_tf=None, tail_frames=100, fps=60, dpi=100):
+    def anim_simulation(
+        self, anim_tf=None, tail_frames=100, fps=60, dpi=100, figsize=FIGSIZE
+    ):
         """ """
         # Extract the requiered data from the simulation
         data_t = np.array(self.data["t"])
         data_p = np.array(self.data["p"])
         data_status = np.array(self.data["status"])
+
+        agents_colors = [
+            "royalblue" if data_status[0, n] else "red" for n in range(self.N)
+        ]
 
         # Animation variables
         # res = RES_DIC[res_label]
@@ -423,10 +441,10 @@ class SingIntPlotter:
         elif anim_tf > data_t[-1]:
             anim_tf = data_t[-1]
 
-        anim_frames = int(anim_tf / self.dt + 1)
+        anim_frames = self.its
 
         # Initialise the figure
-        fig = plt.figure(figsize=FIGSIZE, dpi=dpi)
+        fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.subplots()
 
         ax.set_xlim(self.xlim)
@@ -448,7 +466,11 @@ class SingIntPlotter:
         traces_list = []
         for n in range(self.N):
             (line,) = ax.plot(
-                data_p[0, n, 0], data_p[0, n, 1], c="royalblue", zorder=1, lw=self.lw
+                data_p[0, n, 0],
+                data_p[0, n, 1],
+                c=agents_colors[n],
+                zorder=1,
+                lw=self.lw,
             )
             traces_list.append(line)
 
@@ -456,42 +478,28 @@ class SingIntPlotter:
         icons_list = []
         for n in range(self.N):
             icon = plt.Circle(
-                (data_p[0, n, 0], data_p[0, n, 1]), self.size, color="royalblue"
+                (data_p[0, n, 0], data_p[0, n, 1]), self.size, color=agents_colors[n]
             )
             ax.add_patch(icon)
             icons_list.append(icon)
 
-        # Function to update the animation
-        def animate(i):
-            # Agents
-            for n in range(self.N):
-                icons_list[n].remove()
-                icons_list[n] = plt.Circle(
-                    (data_p[i, n, 0], data_p[i, n, 1]), self.size, color="royalblue"
-                )
-
-                ax.add_patch(icons_list[n])
-
-                if i > tail_frames:
-                    traces_list[n].set_data(
-                        data_p[i - tail_frames : i, n, 0],
-                        data_p[i - tail_frames : i, n, 1],
-                    )
-                else:
-                    traces_list[n].set_data(data_p[0:i, n, 0], data_p[0:i, n, 1])
-                traces_list[n].set_color("royalblue")
-
-                title.set_text(
-                    "Frame = {0:>4} | Tf = {1:>5.2f} [T] | N = {2:>3} robots".format(
-                        i, i * self.dt, self.N
-                    )
-                )
+        # -----------------------------------------------------
+        # Update the information of the Animation class
+        self.animation.set_data(self.N, data_p, data_status, self.dt)
+        self.animation.set_graphics(
+            ax=ax,
+            title=title,
+            traces=traces_list,
+            icons=icons_list,
+            tail_frames=tail_frames,
+            size=self.size,
+        )
 
         # Generate the animation
         print("Generating {0:d} frames...".format(anim_frames))
         anim = FuncAnimation(
             fig,
-            animate,
+            self.animation.animate,
             frames=tqdm(range(anim_frames), initial=1, position=0),
             interval=1 / fps * 1000,
         )
@@ -500,3 +508,6 @@ class SingIntPlotter:
         # Close plots and return the animation class to be compiled
         plt.close()
         return anim
+
+
+# --------------------------------------------------------------------------------------

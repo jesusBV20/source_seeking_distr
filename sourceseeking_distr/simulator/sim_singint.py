@@ -54,6 +54,7 @@ class SingIntSimulator:
         self.ks = 1 / 3
 
         # Integrator and ED solver parameters
+        self.it = 0
         self.t = 0
         self.dt = dt
         self.tc = np.linspace(0, its_c, its_c + 1)
@@ -208,6 +209,8 @@ class SingIntSimulator:
 
         self.t = self.t + self.dt
         self.p = self.p + self.dt * p_dot
+
+        self.it += 1
 
         # Update output data
         self.update_data()

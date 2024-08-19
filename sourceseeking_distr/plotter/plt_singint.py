@@ -108,7 +108,7 @@ class SingIntPlotter:
         plt.show()
 
     def plot_paper_fig(
-        self, dpi=100, obstacles=None, figsize=(16, 8), est_window=[], lw_data=0.8
+        self, dpi=100, obstacles=None, figsize=(17, 8), est_window=[], lw_data=0.8
     ):
         # Extract the requiered data from the simulation
         data_p = np.array(self.data["p"])
@@ -124,12 +124,14 @@ class SingIntPlotter:
 
         # Initialise the figure
         fig = plt.figure(figsize=figsize, dpi=dpi)
-        grid = plt.GridSpec(4, 5, hspace=0.2, wspace=1)
+        grid = plt.GridSpec(4, 7, hspace=0.4, wspace=1)
         ax = fig.add_subplot(grid[:, 0:3])
         ax_data_pcx = fig.add_subplot(grid[0, 3:5], xticklabels=[])
         ax_data_pcy = fig.add_subplot(grid[1, 3:5], xticklabels=[])
-        ax_data_mux = fig.add_subplot(grid[2, 3:5])
+        ax_data_mux = fig.add_subplot(grid[2, 3:5], xticklabels=[])
         ax_data_muy = fig.add_subplot(grid[3, 3:5])
+        ax_data_sigma = fig.add_subplot(grid[0:2, 5:7], xticklabels=[])
+        ax_data_dist  = fig.add_subplot(grid[2:4, 5:7])
 
         ax.set_xlim(self.xlim)
         ax.set_ylim(self.ylim)
@@ -138,23 +140,34 @@ class SingIntPlotter:
         ax.set_aspect("equal")
         ax.grid(True)
 
-        ax_data_pcx.set_ylabel(r"")
+        ax_data_pcx.set_ylabel(r"$\hat{p_c}^x$")
         ax_data_pcx.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
         ax_data_pcx.yaxis.tick_right()
         ax_data_pcx.grid(True)
-        ax_data_pcy.set_ylabel(r"")
+        ax_data_pcy.set_ylabel(r"$\hat{p_c}^y$")
         ax_data_pcy.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
         ax_data_pcy.yaxis.tick_right()
         ax_data_pcy.grid(True)
-        ax_data_mux.set_ylabel(r"$\mu_x$")
+        ax_data_mux.set_ylabel(r"$\hat{\mu}^x$")
         ax_data_mux.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
         ax_data_mux.yaxis.tick_right()
         ax_data_mux.grid(True)
         ax_data_muy.set_xlabel(r"$t$ [T]")
-        ax_data_muy.set_ylabel(r"$\mu_y$")
+        ax_data_muy.set_ylabel(r"$\hat{\mu}^y$")
         ax_data_muy.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
         ax_data_muy.yaxis.tick_right()
         ax_data_muy.grid(True)
+
+        ax_data_sigma.set_xlabel(r"")
+        ax_data_sigma.set_ylabel(r"$\sigma(p_i)$ [u]")
+        ax_data_sigma.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
+        ax_data_sigma.yaxis.tick_right()
+        ax_data_sigma.grid(True)
+        ax_data_dist.set_xlabel(r"$t$ [T]")
+        ax_data_dist.set_ylabel(r"$\|p_i - p^*\|$ [L]")
+        ax_data_dist.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
+        ax_data_dist.yaxis.tick_right()
+        ax_data_dist.grid(True)
 
         #############
         # MAIN axis

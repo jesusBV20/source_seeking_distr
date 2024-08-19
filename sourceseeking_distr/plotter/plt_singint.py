@@ -117,6 +117,10 @@ class SingIntPlotter:
         data_mu_log = np.array(self.data["mu_log"])
         data_pc = np.array(self.data["pc_comp"])
         data_mu = np.array(self.data["mu_comp"])
+        data_sigma = np.array(self.data["sigma"])
+
+        mu = self.sigma_field.mu
+        data_dist = np.linalg.norm(data_p - mu, axis=2)
 
         agents_colors = [
             "royalblue" if data_status[-1, n] else "red" for n in range(self.N)
@@ -131,7 +135,7 @@ class SingIntPlotter:
         ax_data_mux = fig.add_subplot(grid[2, 3:5], xticklabels=[])
         ax_data_muy = fig.add_subplot(grid[3, 3:5])
         ax_data_sigma = fig.add_subplot(grid[0:2, 5:7], xticklabels=[])
-        ax_data_dist  = fig.add_subplot(grid[2:4, 5:7])
+        ax_data_dist = fig.add_subplot(grid[2:4, 5:7])
 
         ax.set_xlim(self.xlim)
         ax.set_ylim(self.ylim)
@@ -140,20 +144,20 @@ class SingIntPlotter:
         ax.set_aspect("equal")
         ax.grid(True)
 
-        ax_data_pcx.set_ylabel(r"$\hat{p_c}^x$")
+        ax_data_pcx.set_ylabel(r"$p_i^X - \hat x_i^X$ [L]")
         ax_data_pcx.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
         ax_data_pcx.yaxis.tick_right()
         ax_data_pcx.grid(True)
-        ax_data_pcy.set_ylabel(r"$\hat{p_c}^y$")
+        ax_data_pcy.set_ylabel(r"$p_i^Y - \hat x_i^Y$ [L]")
         ax_data_pcy.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
         ax_data_pcy.yaxis.tick_right()
         ax_data_pcy.grid(True)
-        ax_data_mux.set_ylabel(r"$\hat{\mu}^x$")
+        ax_data_mux.set_ylabel(r"$\mu_i^X$ [u/L]")
         ax_data_mux.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
         ax_data_mux.yaxis.tick_right()
         ax_data_mux.grid(True)
         ax_data_muy.set_xlabel(r"$t$ [T]")
-        ax_data_muy.set_ylabel(r"$\hat{\mu}^y$")
+        ax_data_muy.set_ylabel(r"$\mu_i^Y$ [u/L]")
         ax_data_muy.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
         ax_data_muy.yaxis.tick_right()
         ax_data_muy.grid(True)
@@ -164,7 +168,7 @@ class SingIntPlotter:
         ax_data_sigma.yaxis.tick_right()
         ax_data_sigma.grid(True)
         ax_data_dist.set_xlabel(r"$t$ [T]")
-        ax_data_dist.set_ylabel(r"$\|p_i - p^*\|$ [L]")
+        ax_data_dist.set_ylabel(r"$\|p_\sigma - p_i\|$ [L]")
         ax_data_dist.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
         ax_data_dist.yaxis.tick_right()
         ax_data_dist.grid(True)
@@ -187,17 +191,29 @@ class SingIntPlotter:
             )
 
         # Agents icon
+        x = data_pc[0, 0] - 15
+        y = data_pc[0, 1] + 7
+        ax.text(x, y, "t = " + str(round(0, 2)))
         for n in range(self.N):
             icon_i = plt.Circle(
                 (data_p[0, n, 0], data_p[0, n, 1]), self.size, color=agents_colors[n]
             )
-            icon_f = plt.Circle(
-                (data_p[-1, n, 0], data_p[-1, n, 1]), self.size, color=agents_colors[n]
-            )
-
             icon_i.set_alpha(0.5)
             ax.add_patch(icon_i)
-            ax.add_patch(icon_f)
+
+        t_list = [self.tf / 4, self.tf / 2, self.tf]
+        for t in t_list:
+            it = int(t / self.dt)
+            x = data_pc[it, 0] - 15
+            y = data_pc[it, 1] + 7
+            ax.text(x, y, "t = " + str(round(t, 2)))
+            for n in range(self.N):
+                icon = plt.Circle(
+                    (data_p[it, n, 0], data_p[it, n, 1]),
+                    self.size,
+                    color=agents_colors[n],
+                )
+                ax.add_patch(icon)
 
         # Obstacles
         if obstacles is not None:
@@ -245,7 +261,7 @@ class SingIntPlotter:
         ax_data_mux.plot(time_step_vec, data_mux, "-k", lw=2, zorder=3)
         ax_data_muy.plot(time_step_vec, data_muy, "-k", lw=2, zorder=3)
 
-        agents_colors = [
+        agents_colors2 = [
             "royalblue" if data_status[it2, n] else "red" for n in range(self.N)
         ]
 
@@ -260,11 +276,20 @@ class SingIntPlotter:
             data_mux = data_mux.reshape(len(time_its_m_vec))
             data_muy = data_muy.reshape(len(time_its_m_vec))
 
-            ax_data_pcx.plot(time_its_c_vec, data_pcx, c=agents_colors[n], lw=lw_data)
-            ax_data_pcy.plot(time_its_c_vec, data_pcy, c=agents_colors[n], lw=lw_data)
-            ax_data_mux.plot(time_its_m_vec, data_mux, c=agents_colors[n], lw=lw_data)
-            ax_data_muy.plot(time_its_m_vec, data_muy, c=agents_colors[n], lw=lw_data)
+            ax_data_pcx.plot(time_its_c_vec, data_pcx, c=agents_colors2[n], lw=lw_data)
+            ax_data_pcy.plot(time_its_c_vec, data_pcy, c=agents_colors2[n], lw=lw_data)
+            ax_data_mux.plot(time_its_m_vec, data_mux, c=agents_colors2[n], lw=lw_data)
+            ax_data_muy.plot(time_its_m_vec, data_muy, c=agents_colors2[n], lw=lw_data)
 
+        time_vec = np.arange(0, self.tf, self.dt)
+
+        ax_data_sigma.axhline(self.sigma_field.value(mu), c="k", ls="--", lw=2)
+        ax_data_dist.axhline(0, c="k", ls="--", lw=2)
+
+        for n in range(self.N):
+            kw_args = {"c": agents_colors[n], "lw": lw_data, "alpha": 0.8}
+            ax_data_sigma.plot(time_vec, data_sigma[:, n], **kw_args)
+            ax_data_dist.plot(time_vec, data_dist[:, n], **kw_args)
         # Show the plot!!
         plt.show()
 

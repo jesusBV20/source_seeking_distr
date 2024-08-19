@@ -128,7 +128,7 @@ def gen_Z_distance(P, dist_thr):
     return Z
 
 
-def gen_Z_split(N, order):
+def gen_Z_split(N, order, n_breaks=0):
     X = np.ones((N, 2))
     for i in range(order):
         if i != order - 1:
@@ -144,7 +144,18 @@ def gen_Z_split(N, order):
     mask = dist + 2 * np.eye(dist.shape[0]) * dist_thr <= dist_thr
 
     Z = [(i, j) for i, j in zip(*np.where(mask))]
-    return Z
+
+    # Remove some conections
+    N_subgraph = int(N / order)
+    edges_subgraph = int(2 * N_subgraph * (N_subgraph - 1) / 2)
+    idx_to_remove = []
+    if n_breaks > 0:
+        for i in range(order):
+            for j in range(n_breaks):
+                idx = edges_subgraph * i + int(N * N_subgraph / n_breaks) * j
+                idx_to_remove.append(idx)
+    Z_break = [edge for i, edge in enumerate(Z) if i not in idx_to_remove]
+    return Z_break
 
 
 def step_repeat(array, order):

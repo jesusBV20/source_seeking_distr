@@ -67,6 +67,7 @@ class SingIntSimulator:
         self.data = {
             "t": [],
             "p": [],
+            "sigma": [],
             "pc_hat": [],
             "mu": [],
             "pc_hat_log": [],
@@ -107,6 +108,7 @@ class SingIntSimulator:
         """
         self.data["t"].append(self.t)
         self.data["p"].append(self.p)
+        self.data["sigma"].append(self.sigma)
         self.data["pc_hat"].append(self.pc_hat)
         self.data["mu"].append(self.mu)
         self.data["pc_hat_log"].append(self.pc_hat_log)

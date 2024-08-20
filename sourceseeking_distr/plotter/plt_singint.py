@@ -27,7 +27,14 @@ FIGSIZE = (12, 8)
 
 class SingIntPlotter:
     def __init__(
-        self, simulator, xlim=[-50, 80], ylim=[-50, 70], agents_size=0.2, lw=0.3
+        self, 
+        simulator, 
+        xlim=[-50, 80], 
+        ylim=[-50, 70], 
+        agents_size=0.2, 
+        agents_alpha=1, 
+        agents_lw_alpha=0.5, 
+        lw=0.3,
     ):
         matplotlib.rc("font", **{"size": 14})
 
@@ -39,7 +46,9 @@ class SingIntPlotter:
         self.its = simulator.it
 
         self.xlim, self.ylim = xlim, ylim
-        self.size = agents_size
+        self.agts_size = agents_size
+        self.agts_alpha = agents_alpha
+        self.agts_lw_alpha = agents_lw_alpha
         self.lw = lw
 
         dx = abs(self.xlim[0] - self.xlim[1])
@@ -90,10 +99,10 @@ class SingIntPlotter:
         # Agents icon
         for n in range(self.N):
             icon_i = plt.Circle(
-                (data_p[0, n, 0], data_p[0, n, 1]), self.size, color=agents_colors[n]
+                (data_p[0, n, 0], data_p[0, n, 1]), self.agts_size, color=agents_colors[n]
             )
             icon_f = plt.Circle(
-                (data_p[-1, n, 0], data_p[-1, n, 1]), self.size, color=agents_colors[n]
+                (data_p[-1, n, 0], data_p[-1, n, 1]), self.agts_size, color=agents_colors[n]
             )
 
             icon_i.set_alpha(0.5)
@@ -114,12 +123,13 @@ class SingIntPlotter:
     def plot_paper_fig(
         self,
         dpi=100,
-        obstacles=None,
         figsize=(17, 8),
+        obstacles=None,
         est_window=[],
         lw_data=0.8,
         alpha=0.8,
         text_shift=[-15, 7],
+        xtick_step = 1,
     ):
         # Extract the requiered data from the simulation
         data_p = np.array(self.data["p"])
@@ -139,14 +149,13 @@ class SingIntPlotter:
 
         # Initialise the figure
         fig = plt.figure(figsize=figsize, dpi=dpi)
-        grid = plt.GridSpec(4, 7, hspace=0.4, wspace=1)
+        grid = plt.GridSpec(3, 7, hspace=0.4, wspace=1)
         ax = fig.add_subplot(grid[:, 0:3])
         ax_data_pcx = fig.add_subplot(grid[0, 3:5], xticklabels=[])
         ax_data_pcy = fig.add_subplot(grid[1, 3:5], xticklabels=[])
-        ax_data_mux = fig.add_subplot(grid[2, 3:5], xticklabels=[])
-        ax_data_muy = fig.add_subplot(grid[3, 3:5])
-        ax_data_sigma = fig.add_subplot(grid[0:2, 5:7], xticklabels=[])
-        ax_data_dist = fig.add_subplot(grid[2:4, 5:7])
+        ax_data_mu = fig.add_subplot(grid[2, 3:5])
+        ax_data_sigma = fig.add_subplot(grid[0, 5:7], xticklabels=[])
+        ax_data_dist = fig.add_subplot(grid[1:3, 5:7])
 
         ax.set_xlim(self.xlim)
         ax.set_ylim(self.ylim)
@@ -163,15 +172,11 @@ class SingIntPlotter:
         ax_data_pcy.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
         ax_data_pcy.yaxis.tick_right()
         ax_data_pcy.grid(True)
-        ax_data_mux.set_ylabel(r"$\mu_i^X$ [u/L]")
-        ax_data_mux.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
-        ax_data_mux.yaxis.tick_right()
-        ax_data_mux.grid(True)
-        ax_data_muy.set_xlabel(r"$t$ [T]")
-        ax_data_muy.set_ylabel(r"$\mu_i^Y$ [u/L]")
-        ax_data_muy.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
-        ax_data_muy.yaxis.tick_right()
-        ax_data_muy.grid(True)
+        ax_data_dist.set_xlabel(r"$t$ [T]")
+        ax_data_mu.set_ylabel(r"$\arctan(\mu_i^Y/\mu_i^X)$ [rad]")
+        ax_data_mu.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
+        ax_data_mu.yaxis.tick_right()
+        ax_data_mu.grid(True)
 
         ax_data_sigma.set_xlabel(r"")
         ax_data_sigma.set_ylabel(r"$\sigma(p_i)$ [u]")
@@ -197,7 +202,7 @@ class SingIntPlotter:
                 data_p[:, n, 1],
                 c=agents_colors[n],
                 zorder=1,
-                alpha=0.5,
+                alpha=self.agts_lw_alpha,
                 lw=self.lw,
             )
 
@@ -207,7 +212,7 @@ class SingIntPlotter:
         ax.text(x, y, "t = " + str(round(0, 2)))
         for n in range(self.N):
             icon_i = plt.Circle(
-                (data_p[0, n, 0], data_p[0, n, 1]), self.size, color=agents_colors[n]
+                (data_p[0, n, 0], data_p[0, n, 1]), self.agts_size, color=agents_colors[n]
             )
             icon_i.set_alpha(0.5)
             ax.add_patch(icon_i)
@@ -221,9 +226,10 @@ class SingIntPlotter:
             for n in range(self.N):
                 icon = plt.Circle(
                     (data_p[it, n, 0], data_p[it, n, 1]),
-                    self.size,
+                    self.agts_size,
                     color=agents_colors[n],
                 )
+                icon.set_alpha(self.agts_alpha)
                 ax.add_patch(icon)
 
         # Obstacles
@@ -245,32 +251,35 @@ class SingIntPlotter:
         # DATA axis
         #############
         t1, t2 = est_window
-        it1, it2 = int(np.floor(t1 / self.dt)), int(np.ceil(t2 / self.dt))
-        its = int(np.ceil((t2 - t1) / self.dt)) + 1
+        it1, it2 = int(np.floor(t1 / self.dt)), int(np.floor(t2 / self.dt))
+        its = it2 - it1 + 1
         its_c, its_m = data_pc_hat_log.shape[1], data_mu_log.shape[1]
         time_vec = np.linspace(t1, t2, its)
 
         dt_c, dt_m = self.dt / (its_c - 1), self.dt / (its_m - 1)
-        time_its_c_vec = np.arange(t1, t2 + dt_c, dt_c)
-        time_its_m_vec = np.arange(t1, t2 + dt_m, dt_m)
+        time_its_c_vec = np.arange(t1, t2 + dt_c, dt_c)[0:its_c*(its-1)-2]
+        time_its_m_vec = np.arange(t1, t2 + dt_m, dt_m)[0:its_m*(its-1)-2]
         time_its_c_vec = step_repeat(time_its_c_vec, its_c)
         time_its_m_vec = step_repeat(time_its_m_vec, its_m)
 
+        time_vec_str = ["{:.2f}".format(round(i,2)) for i in time_vec]
+        xticks_lables = np.array([""]*len(time_vec), dtype="U16")
+        xticks_lables[0::xtick_step] = time_vec_str[0::xtick_step]
+    
         ax_data_pcx.set_xticks(time_vec)
         ax_data_pcy.set_xticks(time_vec)
-        ax_data_mux.set_xticks(time_vec)
-        ax_data_muy.set_xticks(time_vec)
+        ax_data_mu.set_xticks(time_vec, xticks_lables)
 
         time_step_vec = np.repeat(time_vec, 2)[1:-1]
         data_pcx = np.repeat(data_pc[it1 : it2 + 1, 0], 2)[:-2]
         data_pcy = np.repeat(data_pc[it1 : it2 + 1, 1], 2)[:-2]
         data_mux = np.repeat(data_mu[it1 : it2 + 1, 0], 2)[:-2]
         data_muy = np.repeat(data_mu[it1 : it2 + 1, 1], 2)[:-2]
+        data_mu_theta = np.arctan2(data_muy, data_mux)
 
         ax_data_pcx.plot(time_step_vec, data_pcx, "-k", lw=2, zorder=3)
         ax_data_pcy.plot(time_step_vec, data_pcy, "-k", lw=2, zorder=3)
-        ax_data_mux.plot(time_step_vec, data_mux, "-k", lw=2, zorder=3)
-        ax_data_muy.plot(time_step_vec, data_muy, "-k", lw=2, zorder=3)
+        ax_data_mu.plot(time_step_vec, data_mu_theta, "-k", lw=2, zorder=3)
 
         agents_colors2 = [
             "royalblue" if data_status[it2, n] else "red" for n in range(self.N)
@@ -286,12 +295,12 @@ class SingIntPlotter:
             data_pcy = data_pcy.reshape(len(time_its_c_vec))
             data_mux = data_mux.reshape(len(time_its_m_vec))
             data_muy = data_muy.reshape(len(time_its_m_vec))
+            data_mu_theta = np.arctan2(data_muy, data_mux)
 
             kw_args = {"c": agents_colors2[n], "lw": lw_data, "alpha": alpha}
             ax_data_pcx.plot(time_its_c_vec, data_pcx, **kw_args)
             ax_data_pcy.plot(time_its_c_vec, data_pcy, **kw_args)
-            ax_data_mux.plot(time_its_m_vec, data_mux, **kw_args)
-            ax_data_muy.plot(time_its_m_vec, data_muy, **kw_args)
+            ax_data_mu.plot(time_its_m_vec, data_mu_theta, **kw_args)
 
         time_vec = np.linspace(0, self.tf, self.its)
 
@@ -478,7 +487,7 @@ class SingIntPlotter:
         icons_list = []
         for n in range(self.N):
             icon = plt.Circle(
-                (data_p[0, n, 0], data_p[0, n, 1]), self.size, color=agents_colors[n]
+                (data_p[0, n, 0], data_p[0, n, 1]), self.agts_size, color=agents_colors[n]
             )
             ax.add_patch(icon)
             icons_list.append(icon)
@@ -492,7 +501,7 @@ class SingIntPlotter:
             traces=traces_list,
             icons=icons_list,
             tail_frames=tail_frames,
-            size=self.size,
+            size=self.agts_size,
         )
 
         # Generate the animation

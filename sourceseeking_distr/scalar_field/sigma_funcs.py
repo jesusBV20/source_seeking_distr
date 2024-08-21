@@ -64,10 +64,44 @@ class SigmaGauss(SigmaField):
         )
         return sigma
 
+    # sigma(p) \prop exp(g(p)), where g(p) = (X-x0)^T @ Q @ (X-x0)
+
     def eval_grad(self, X):
         X = two_dim(X)
-        return Q_prod_xi(self.Q, X - self.x0) * self.value(X)
+        x, y = X[0,0], X[0,1]
+        x0, y0 = self.x0[0], self.x0[1] 
+        q11,q12 = self.Q[0,0], self.Q[0,1]
+        q21,q22 = self.Q[1,0], self.Q[1,1]
 
+        # Compute the gradient
+        g_dx = 2 * q11 * (x-x0) + (q12 + q21) * (y-y0)
+        g_dy = 2 * q22 * (y-y0) + (q12 + q21) * (x-x0)
+
+        return np.array([[g_dx, g_dy]]) * self.value(X)
+    
+    def eval_hessian(self, X):
+        X = two_dim(X)
+        x, y = X[0,0], X[0,1]
+        x0, y0 = self.x0[0], self.x0[1]
+        q11,q12 = self.Q[0,0], self.Q[0,1]
+        q21,q22 = self.Q[1,0], self.Q[1,1]
+
+        # Compute the hessian
+        g_dx = 2 * q11 * (x-x0) + (q12 + q21) * (y-y0)
+        g_dy = 2 * q22 * (y-y0) + (q12 + q21) * (x-x0)
+
+        g_dxx = 2 * q11
+        g_dxy = (q12 + q21)
+        g_dyx = (q12 + q21)
+        g_dyy = 2 * q22
+
+        H = np.zeros((2,2))
+        H[0,0] = self.value(X) * (g_dx * g_dx + g_dxx) 
+        H[0,1] = self.value(X) * (g_dx * g_dy + g_dyx)
+        H[1,0] = self.value(X) * (g_dy * g_dx + g_dxy)
+        H[1,1] = self.value(X) * (g_dy * g_dy + g_dyy)
+
+        return H
 
 # ----------------------------------------------------------------------
 # Non-convex function (two Gaussians + contant * norm)

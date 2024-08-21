@@ -47,6 +47,13 @@ class SigmaField(ABC):
         """
         pass
 
+    @abstractmethod
+    def eval_hessian(self, X: np.ndarray) -> np.ndarray:
+        """
+        Hessian matrix of the scalar field for a vector of values
+        """
+        pass
+
     # ------------------------------------------------------------------------
 
     def value(self, X: np.ndarray) -> np.ndarray:
@@ -57,6 +64,11 @@ class SigmaField(ABC):
         X = Q_prod_xi(self.A, X - self.mu) + self.mu
         grad = self.eval_grad(X)
         return Q_prod_xi(self.A.T, grad)
+
+    def hessian(self, X: np.ndarray) -> np.ndarray: # TODO: fix for affine transformations
+        # X = Q_prod_xi(self.A, X - self.mu) + self.mu
+        H = self.eval_hessian(X)
+        return H
 
     def find_max(self, x0: np.ndarray) -> np.ndarray:
         return minimize(lambda x: -self.value(np.array([x])), x0).x
@@ -104,14 +116,13 @@ class SigmaField(ABC):
         if contour_levels != 0:
             kwargs = {
                 "colors": "k",
-                "linewidths": contour_lw,
                 "linestyles": "-",
                 "alpha": 0.2,
             }
-            contr_map = ax.contour(X, Y, Z, **kwargs)
-            return color_map, contr_map
-        else:
-            return (color_map,)
+            ax.contour(X, Y, Z, contour_levels, linewidths=contour_lw, **kwargs)
+            ax.contour(X, Y, Z, 7, linewidths=contour_lw*2, **kwargs)
+        
+        return color_map
 
     def draw_grad(
         self, x: np.ndarray, axis: plt.Axes, kw_arr: dict = None, ret_arr: bool = True

@@ -168,6 +168,8 @@ def step_repeat(array, order):
 # --------------------------------------------------------------------------------------
 # SCALAR_FIELD MATH UTILS
 
+def norm_2(A):
+    return np.sqrt(np.max(np.linalg.eigvals(A.T @ A)))
 
 def Q_prod_xi(Q, X):
     """
@@ -176,12 +178,12 @@ def Q_prod_xi(Q, X):
     return (Q @ X.T).T
 
 
-def exp(X, Q, mu):
+def exp(X, Q, x0):
     """
     Exponential function with quadratic form:
-                            exp(r) = e^((r - mu)^t @ Q @ (r - mu))
+                            exp(r) = e^((r - x0)^t @ Q @ (r - x0))
     """
-    return np.exp(np.sum((X - mu) * Q_prod_xi(Q, X - mu), axis=1))
+    return np.exp(np.sum((X - x0) * Q_prod_xi(Q, X - x0), axis=1))
 
 
 # -------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 # Resiliend Source Seeking with robot swarms - 2D distributed 
 
-In this repository, we implement a distributed computation algorithm to estimate the ascending direction given by our resilient source-seeking algorithm for robot swarms.  For a comprehensive understanding of the mathematical theory underlying this code, we highly recommend to consult our following works:
+In this repository, we implement a distributed consensus algorithm to estimate the ascending direction given by our resilient source-seeking algorithm for robot swarms.  For a comprehensive understanding of the mathematical theory underlying this code, we highly recommend to consult our following works:
 
     WIP
 

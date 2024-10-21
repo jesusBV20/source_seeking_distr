@@ -173,6 +173,8 @@ class SigmaNonconvex(SigmaField):
         )
         return -sigma_grad
 
+    def eval_hessian(self, X):
+        return None
 
 # ----------------------------------------------------------------------
 # Fractal function (two Gaussians + contant * norm)
@@ -247,3 +249,6 @@ class SigmaFract(SigmaField):
             + self.k * X / (la.norm(X, axis=1)[:, None] + alfa)
         )
         return -sigma_grad
+
+    def eval_hessian(self, X):
+        return None

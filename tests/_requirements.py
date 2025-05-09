@@ -6,7 +6,6 @@ File: _requirements.py
 # Standard Libraries
 import os
 import shutil
-import sys
 
 #######################################################################################
 # Third-Party Libraries
@@ -25,15 +24,8 @@ from IPython.display import HTML
 from matplotlib.animation import PillowWriter
 
 #######################################################################################
-
-# Import the Main Module of the Project
-file_path = os.path.dirname(__file__)
-module_path = os.path.join(file_path, "..")
-if module_path not in sys.path:
-    sys.path.append(module_path)
-
-# Import the main module of the project
-import sourceseeking_distr
+# Import the Swarm Systems Lab Python Simulator
+import ssl_simulator
 
 #######################################################################################
 

@@ -1,28 +1,29 @@
-# Resiliend Source Seeking with robot swarms - 2D distributed 
-
-In this repository, we implement a distributed consensus algorithm to estimate the ascending direction given by our resilient source-seeking algorithm for robot swarms.  For a comprehensive understanding of the mathematical theory underlying this code, we highly recommend to consult our following works:
+# Resilient Source Seeking with robot swarms - 2D distributed 
 
     WIP
-
-    @misc{acuaviva2024resilientsourceseekingrobot,
-      title={Resilient source seeking with robot swarms}, 
-      author={Antonio Acuaviva and Jesus Bautista and Weijia Yao and Juan Jimenez and Hector Garcia de Marina},
-      year={2024},
-      url={https://arxiv.org/abs/2309.02937},
-    }
     
-## Quick Install
+## Installation
 
-To install, run:
+To install the required dependencies, simply run:
 
 ```bash
 python install.py
 ```
 
+### Additional Dependencies
+Some additional dependencies, such as LaTeX fonts and FFmpeg, may be required. We recommend following the installation instructions provided in the ```ssl_simulator``` [README](https://github.com/Swarm-Systems-Lab/ssl_simulator/blob/master/README.md). 
+
+To verify that all additional dependencies are correctly installed on Linux, run:
+```bash
+bash test/test_dep.sh
+```
+
 ## Usage
 
-We recommend running the Jupyter notebooks in the `notebooks` directory to get an overview of the project's structure and see the code in action.
+Run the Jupyter notebooks inside the `notebooks` directory and/or the Python application inside `apps`.
 
 ## Credits
 
-This repository is maintained by [Jesús Bautista Villar](https://sites.google.com/view/jbautista-research). For inquiries or further information, please get in touch with him at <jesbauti20@gmail.com>.
+If you have any questions, open an issue or reach out to the maintainers:
+
+- **[Jesús Bautista Villar](https://sites.google.com/view/jbautista-research)** (<jesbauti20@gmail.com>) – Main Developer

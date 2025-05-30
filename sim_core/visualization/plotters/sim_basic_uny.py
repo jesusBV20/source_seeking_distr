@@ -50,7 +50,7 @@ class PlotterSimBasicUny(Plotter):
         self.kw_patch_dead = parse_kwargs(kw_patch_dead, self.kw_patch)
         
         # Create subplots
-        self.ax = self.fig.subplots(**self.kw_fig)
+        self.ax = self.fig.subplots()
         self.config_axes()
 
     # ---------------------------------------------------------------------------------

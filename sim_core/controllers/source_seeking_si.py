@@ -37,6 +37,11 @@ class SourceSeekingSI(Controller):
             "mu_centralized": None,
         }
 
+        # Controller settings to be tracked by logger
+        self.tracked_settings = {
+            "field_class": self.scalar_field,
+        }
+
         # Controller data
         self.init_data()
 

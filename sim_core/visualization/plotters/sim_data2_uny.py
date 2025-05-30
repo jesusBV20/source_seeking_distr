@@ -46,18 +46,18 @@ class PlotterSimData2Uny(Plotter):
         self.kw_patch_dead = parse_kwargs(kw_patch_dead, self.kw_patch)
 
         # Create subplots
-        grid = plt.GridSpec(2, 3, hspace=0.05, wspace=0.05)
+        grid = plt.GridSpec(2, 2, hspace=0.05, wspace=0.05)
         self.ax1 = self.fig.add_subplot(grid[0, 0])
         self.ax2 = self.fig.add_subplot(grid[0, 1])
-        self.ax3 = self.fig.add_subplot(grid[0, 2])
-        self.ax4 = self.fig.add_subplot(grid[1, 0])
-        self.ax5 = self.fig.add_subplot(grid[1, 1])
-        self.ax6 = self.fig.add_subplot(grid[1, 2])
+        self.ax3 = self.fig.add_subplot(grid[1, 0])
+        self.ax4 = self.fig.add_subplot(grid[1, 1])
+        # self.ax5 = self.fig.add_subplot(grid[1, 1])
+        # self.ax6 = self.fig.add_subplot(grid[1, 2])
         self._create_cbar_axis()
 
-        self.axs = [self.ax1, self.ax2, self.ax3, self.ax4, self.ax5, self.ax6]
-        self.tiksx = [False, False, False, True, True, True]
-        self.tiksy = [True, False, False, True, False, False]
+        self.axs = [self.ax1, self.ax2, self.ax3, self.ax4]
+        self.tiksx = [False, False, True, True]
+        self.tiksy = [True, False, True, False]
 
     # ---------------------------------------------------------------------------------
 
@@ -66,13 +66,13 @@ class PlotterSimData2Uny(Plotter):
         self.fig.canvas.draw()
 
         # Get position of ax3 and ax6
-        pos3 = self.ax3.get_position()
-        pos6 = self.ax6.get_position()
+        pos2 = self.ax2.get_position()
+        pos4 = self.ax4.get_position()
 
         # Calculate bounds for colorbar axis (x0, y0, width, height)
-        x0 = pos3.x1 + 0.01  # a bit to the right of ax3/ax6
-        y0 = pos6.y0         # bottom of ax6
-        height = pos3.y1 - pos6.y0  # full height from bottom of ax6 to top of ax3
+        x0 = pos2.x1 + 0.01  # a bit to the right of ax3/ax6
+        y0 = pos4.y0         # bottom of ax6
+        height = pos2.y1 - pos4.y0  # full height from bottom of ax6 to top of ax3
         width = 0.015        # or any small value
 
         self.ax_cbar = self.fig.add_axes([x0, y0, width, height])
@@ -84,8 +84,8 @@ class PlotterSimData2Uny(Plotter):
             
     def _config_axes(self):
         # self.ax1.set_ylabel(r"$Y$ [L]")
-        self.ax4.set_ylabel(r"$Y$ [L]")
-        self.ax4.set_xlabel(r"$X$ [L]")
+        self.ax3.set_ylabel(r"$Y$ [L]")
+        self.ax3.set_xlabel(r"$X$ [L]")
         # self.ax5.set_xlabel(r"$X$ [L]")
         # self.ax6.set_xlabel(r"$X$ [L]")
 
@@ -116,6 +116,15 @@ class PlotterSimData2Uny(Plotter):
         for ax in self.axs:
             ax.clear()
         
+        if self.t_list is None:
+            raise ValueError("Error: t_list not set.")
+        elif isinstance(self.t_list, (list, tuple)):
+            if len(self.t_list) != 4:
+                raise ValueError("Error: The length of t_list should be 4.")
+        else:
+            raise TypeError("Error: t_list must be a list or tuple.")
+            
+
         self._config_axes()
 
         # ------------------------------------------------
@@ -127,7 +136,6 @@ class PlotterSimData2Uny(Plotter):
         p = self.data["p"][:,:,:]
         theta = self.data["theta"][:,:]
         sigma_mu = self.data["scalar_field_mu"]
-        status = np.array(self.data["status"], dtype=bool)
         
         # ------------------------------------------------
         # MAIN AXIS
@@ -159,7 +167,7 @@ class PlotterSimData2Uny(Plotter):
             self.axs[i].text(-120, 95, 
                 f"t = {time[idx]:.0f} T", va='center', ha='left', fontsize=18)
             if i == 0:
-                self.axs[i].text(75, 95, 
+                self.axs[i].text(65, 95, 
                     f"N = {n_robots:d}", va='center', ha='left', fontsize=18)
 
             self.axs[i].plot(p[:idx,:,0], p[:idx,:,1], **self.kw_lines)
@@ -171,7 +179,7 @@ class PlotterSimData2Uny(Plotter):
 
             # Plot the scalar field
             self.scalar_field.mu = sigma_mu[idx,:]
-            if i != 5:
+            if i != 3:
                 self.field_plotter.draw(fig=self.fig, ax=self.axs[i], 
                                         cbar_sw=False, **self.kw_field)
             else:

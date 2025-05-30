@@ -65,9 +65,10 @@ class PlotterSimBasicSI(Plotter):
         )
         self.field_plotter = PlotterScalarField(self.scalar_field)
         
-        n  = self.settings["graph"]["__params__"]["N"]
-        ep_x, ep_mu = self.settings["ep_x"], self.settings["ep_mu"]
-        self.title = f"n={n}, $\epsilon_x$={ep_x}, $\epsilon_\mu$={ep_mu}"
+        if "graph" in self.settings.keys():
+            n  = self.settings["graph"]["__params__"]["N"]
+            ep_x, ep_mu = self.settings["ep_x"], self.settings["ep_mu"]
+            self.title = f"n={n}, $\epsilon_x$={ep_x}, $\epsilon_\mu$={ep_mu}"
 
 
     def draw(self, num_patches=2, **kwargs):

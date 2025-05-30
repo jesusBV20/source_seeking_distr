@@ -1,6 +1,14 @@
 # Resilient Source Seeking with robot swarms - 2D distributed 
 
-    WIP
+This repository contains some Python simulations that help us to validate the results and findings presented in the following article:
+```
+@misc{jbautista2025distributedss,
+  title={Fully distributed and resilient source seeking for robot swarms}, 
+  author={Jesus Bautista and Antonio Acuaviva and Jose Hinojosa and Weijia Yao and Juan Jimenez and Hector Garcia de Marina},
+  year={2025},
+  url={},
+}
+```
     
 ## Installation
 

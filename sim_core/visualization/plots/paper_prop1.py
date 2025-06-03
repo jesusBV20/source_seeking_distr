@@ -95,7 +95,7 @@ class PlotProp1:
             figsize=(14,8), 
             xlim=[-5,60], 
             ylim=[15,55],
-            fontsize=14
+            fontsize=16
             ):
         fig = plt.figure(figsize=figsize, dpi=dpi)
         grid = plt.GridSpec(2, 4, hspace=0.2, wspace=1)
@@ -127,11 +127,11 @@ class PlotProp1:
         ax_right2.yaxis.set_minor_locator(ticker.MultipleLocator(10 / 4))    
 
         # Right axis configuration
-        ax_right1.set_ylabel(r"$h(x)$")
+        ax_right1.set_ylabel(r"$h_{\mathcal{S}}(x)$")
         ax_right1.yaxis.set_major_formatter(plt.FormatStrFormatter("%.1f"))
         ax_right1.yaxis.tick_right()
         ax_right1.grid(True)
-        ax_right2.set_xlabel(r"$||p_c(x) - p_\sigma||$ [L]")
+        ax_right2.set_xlabel(r"$||p_c - p_\sigma||$ [L]")
         ax_right2.set_ylabel(r"$K_\mathcal{S}^{\text{min}} \,/\,M_\mathcal{S}$")
         ax_right2.yaxis.set_major_formatter(plt.FormatStrFormatter("%.0f"))
         ax_right2.yaxis.tick_right()
@@ -149,20 +149,20 @@ class PlotProp1:
         pc = np.array([25, 0])
 
         ax.plot(pc[0], pc[1], "+k") 
-        vector2d(ax, [0,0], pc-np.array([0, 0]), lw = 1, hw=0.5, hl=0.5, zorder=2)
+        vector2d(ax, [0,0], pc-np.array([0, 0]), lw = 1, hw=0.6, hl=0.6, zorder=2)
         # ax.text(-2, 1, r"$p_\sigma$", fontsize=fontsize, zorder=3)
-        ax.text(pc[0]/3, pc[1]+1, r"$p_c(x) - p_\sigma$", fontsize=fontsize, zorder=3)
+        ax.text(pc[0]/3, pc[1]+1, r"$p_c - p_\sigma$", fontsize=fontsize, zorder=3)
 
         # Draw the subset S
-        delta = 4
+        delta = 4.8
         set_patch = plt.Circle(pc, delta, color="gray")
         set_patch.set_alpha(0.5)
         ax.add_patch(set_patch)
 
         h = - (delta + 1.5)
-        vector2d(ax, pc + np.array([0,h]), np.array([-delta,0]), lw = 1, hw=0.25, hl=0.25, zorder=2)
-        vector2d(ax, pc + np.array([0,h]), np.array([ delta,0]), lw = 1, hw=0.25, hl=0.25, zorder=2)
-        ax.text(pc[0]-0.5, pc[1]+h-2, r"$\delta$", fontsize=fontsize, zorder=3)
+        vector2d(ax, pc + np.array([0,h]), np.array([-delta,0]), lw = 1, hw=0.45, hl=0.45, zorder=2)
+        vector2d(ax, pc + np.array([0,h]), np.array([ delta,0]), lw = 1, hw=0.45, hl=0.45, zorder=2)
+        ax.text(pc[0]-0.5, pc[1]+h-3, r"$\delta$", fontsize=fontsize, zorder=3)
         ax.text(pc[0]+1.8, pc[1]-2.1, r"$\mathcal{S}$", fontsize=fontsize, zorder=3)
         
         # Draw the agents
@@ -171,14 +171,14 @@ class PlotProp1:
         # -- Numerical simulation plots --
         ax_right1.axhline(0, color="k", ls="--", lw=1)
         ax_right2.axhline(thr, color="k", ls="--", lw=1)
-        ax_right2.text(16, thr+4, r"$\frac{D^3}{\lambda_{\text{min}}\{P(x)\}}$", fontsize=fontsize, zorder=3)
+        ax_right2.text(16, thr+5, r"$\frac{D^3}{\lambda_{\text{min}}\{P(x)\}}$", fontsize=fontsize+2, zorder=3)
 
         for i in range(len(self.delta_list)):
             delta = self.delta_list[i]
             ax_right1.plot(self.data_dist, self.data_ineq[:,i], label=r"$\delta$ = {:.1f}".format(delta))
             ax_right2.plot(self.data_dist, self.data_rate[:,i])
             
-        ax_right1.legend(fancybox=True, prop={"size": 10})
+        ax_right1.legend(fancybox=True, prop={"size": 11})
         
         # -> Show the plot <-
         ax.grid(True)

@@ -1,7 +1,2 @@
 ## Required python packages ##
-matplotlib==3.6.1
-numpy==1.26.4
-pillow==11.1.0
-scipy==1.15.2
-tqdm==4.67.1
-ipython==8.34.0
+git+https://github.com/Swarm-Systems-Lab/ssl_simulator.git@v0.0.1

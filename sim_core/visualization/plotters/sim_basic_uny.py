@@ -9,20 +9,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Import visualization tools and GVF trajectory from the Swarm Systems Lab Simulator
-from ssl_simulator import parse_kwargs
+from ssl_simulator import parse_kwargs, load_class
 from ssl_simulator.visualization import Plotter, config_data_axis, unicycle_patch
 
-from ssl_simulator.components.scalar_fields import PlotterScalarField
+from ssl_simulator.components.scalar_fields import ScalarField, PlotterScalarField
 
 #######################################################################################
 
 class PlotterSimBasicUny(Plotter):
-    def __init__(self, data, scalar_field, **kwargs):
+    def __init__(self, data, settings, **kwargs):
         super().__init__(**kwargs)
 
         self.data = data
-        self.scalar_field = scalar_field
-        self.field_plotter = PlotterScalarField(scalar_field)
+        self.settings = settings
 
         # Default visual properties
         kw_ax = {
@@ -61,7 +60,20 @@ class PlotterSimBasicUny(Plotter):
         self.ax.set_aspect("equal")
         config_data_axis(self.ax, **self.kw_ax)
 
-    def plot(self, num_patches=2, **kwargs):
+    def _get_settings(self):
+        self.scalar_field = load_class(
+            module_name = "ssl_simulator.components.scalar_fields", 
+            class_name = self.settings["field_class"]["__class__"], 
+            base_class=ScalarField,
+            **self.settings["field_class"]["__params__"]
+        )
+        self.field_plotter = PlotterScalarField(self.scalar_field)
+
+    def draw(self, num_patches=2, **kwargs):
+
+        # ------------------------------------------------
+        # Get scalar_field and title from settings
+        self._get_settings()
 
         # Lines visual properties
         kw_lines = {
